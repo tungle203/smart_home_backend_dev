@@ -1,0 +1,34 @@
+{
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "helmet": "^7.1.0",
+    "nodemon": "^3.1.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "morgan": "^1.10.0",
+    "prettier": "^3.2.5"
+  },
+  "name": "smart_home_backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon src/server.js",
+    "initDB": "node src/models",
+    "prettier": "prettier --single-quote --trailing-comma all --tab-width 4 --write 'src/**/*.{js,json,scss}'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tungle203/smart_home_backend_dev.git"
+  },
+  "author": "tungle203",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tungle203/smart_home_backend_dev/issues"
+  },
+  "homepage": "https://github.com/tungle203/smart_home_backend_dev#readme",
+  "description": ""
+}

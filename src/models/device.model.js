@@ -1,6 +1,3 @@
-const Room = require('./roomModel');
-const DeviceType = require('./deviceTypeModel');
-
 module.exports = (sequelize, DataTypes) => {
     const Device = sequelize.define('Device', {
         name: {

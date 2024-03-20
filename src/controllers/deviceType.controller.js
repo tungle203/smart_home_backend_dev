@@ -1,4 +1,4 @@
-const db = require('../models');
+const db = require('../models/index.model');
 
 const DeviceType = db.deviceType;
 

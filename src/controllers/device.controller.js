@@ -1,4 +1,4 @@
-const db = require('../models');
+const db = require('../models/index.model');
 
 const Device = db.device;
 const Room = db.room;

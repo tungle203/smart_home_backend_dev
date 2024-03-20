@@ -4,7 +4,8 @@ const path = require('path');
 
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: path.join(__dirname, '../../db.sqlite')
+    storage: path.join(__dirname, '../../db.sqlite'),
+    logging: false
 });
 
 const db = {}
@@ -12,9 +13,9 @@ const db = {}
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.room = require('./roomModel')(sequelize, DataTypes);
-db.deviceType = require('./deviceTypeModel')(sequelize, DataTypes);
-db.device = require('./deviceModel')(sequelize, DataTypes);
+db.room = require('./room.model')(sequelize, DataTypes);
+db.deviceType = require('./deviceType.model')(sequelize, DataTypes);
+db.device = require('./device.model')(sequelize, DataTypes);
 
 db.room.hasMany(db.device);
 db.device.belongsTo(db.room);

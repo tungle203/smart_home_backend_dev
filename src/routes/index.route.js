@@ -1,6 +1,6 @@
-const roomRoute = require('./room');
-const deviceRoute = require('./device');
-const deviceTypeRoute = require('./deviceType');
+const roomRoute = require('./room.route');
+const deviceRoute = require('./device.route');
+const deviceTypeRoute = require('./deviceType.route');
 const route = (app) => {
     app.use('/api/room', roomRoute);
     app.use('/api/device', deviceRoute);

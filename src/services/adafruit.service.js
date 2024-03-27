@@ -10,30 +10,26 @@ const config = {
 
 
 class AdafruitService {
-    constructor() {
-        this.userName = process.env.AIO_USERNAME;
+    async createFeed(userName, deviceName) {
+        const feedKey = deviceName.toLowerCase().replace(/ /g, '-');
+        await axios.post(`https://io.adafruit.com/api/v2/${userName}/feeds`, {
+            feed: {
+                name: feedKey
+            }
+        }, config);
     }
-    async createFeed(name) {
-        const data = {
-            name
-        }
-        try {
-            const response = await axios.post(`https://io.adafruit.com/api/v2/${userName}/feeds`, data, config);
-            return response.data;
-        } catch (error) {
-            return error.response.data;
-        }
+    async createData(userName, deviceName, value) {
+        const feedKey = deviceName.toLowerCase().replace(/ /g, '-');
+        await axios.post(`https://io.adafruit.com/api/v2/${userName}/feeds/${feedKey}/data`, {
+            datum: {
+                value
+            }
+        }, config);
     }
-    async createData(feedKey, value) {
-        const data = {
-            value
-        }
-        try {
-            const response = await axios.post(`https://io.adafruit.com/api/v2/${userName}/feeds/${feedKey}/data`, data, config);
-            return response.data;
-        } catch (error) {
-            return error.response.data;
-        }
+    async getLastData(userName, deviceName) {
+        const feedKey = deviceName.toLowerCase().replace(/ /g, '-');
+        const response = await axios.get(`https://io.adafruit.com/api/v2/${userName}/feeds/${feedKey}/data/last`, config);
+        return response.data;
     }
 }
 

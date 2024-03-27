@@ -21,7 +21,7 @@
     "start": "nodemon src/server.js",
     "data": "node src/resources/data.js",
     "prettier": "prettier --single-quote --trailing-comma all --tab-width 4 --write 'src/**/*.{js,json,scss}'",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha src/test/*.js"
   },
   "repository": {
     "type": "git",

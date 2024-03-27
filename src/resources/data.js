@@ -34,6 +34,7 @@ const data = {
   devices: [
     {
       name: "Light 1",
+      feedName: "light-1",
       UserId: 1,
       RoomId: 1,
       DeviceTypeId: 1,
@@ -41,6 +42,7 @@ const data = {
     },
     {
       name: "Light 2",
+      feedName: "light-2",
       UserId: 1,
       RoomId: 2,
       DeviceTypeId: 1,
@@ -48,6 +50,7 @@ const data = {
     },
     {
       name: "Fan 1",
+      feedName: "fan-1",
       UserId: 1,
       RoomId: 1,
       DeviceTypeId: 2,
@@ -55,6 +58,7 @@ const data = {
     },
     {
       name: "Fan 2",
+      feedName: "fan-2",
       UserId: 1,
       RoomId: 2,
       DeviceTypeId: 2,
@@ -63,7 +67,9 @@ const data = {
   ],
 };
 
+
 User.bulkCreate(data.users);
 Room.bulkCreate(data.rooms);
 DeviceType.bulkCreate(data.deviceTypes);
 Device.bulkCreate(data.devices);
+

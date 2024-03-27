@@ -10,6 +10,11 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
             defaultValue: false,
         },
+        feedName: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+        },
     });
 
     return Device;

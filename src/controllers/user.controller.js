@@ -3,6 +3,7 @@ require('dotenv').config();
 
 const db = require('../models/index.model');
 const User = db.user;
+const AdafruitService = require('../services/adafruit.service');
 
 class UserController {
     static async generateToken(payload) {
@@ -18,6 +19,7 @@ class UserController {
         }
 
         try {
+            await AdafruitService.createGroup(userName);
             const user = await User.create({
                 userName: userName,
                 password: password,

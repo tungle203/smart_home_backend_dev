@@ -68,8 +68,12 @@ const data = {
 };
 
 
-User.bulkCreate(data.users);
-Room.bulkCreate(data.rooms);
-DeviceType.bulkCreate(data.deviceTypes);
-Device.bulkCreate(data.devices);
-
+try {
+  User.bulkCreate(data.users);
+  Room.bulkCreate(data.rooms);
+  DeviceType.bulkCreate(data.deviceTypes);
+  Device.bulkCreate(data.devices);
+  console.log("Data inserted successfully");
+} catch (error) {
+  console.log(error);
+}

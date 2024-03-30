@@ -8,7 +8,7 @@ const AdafruitService = require('../services/adafruit.service');
 class UserController {
     static async generateToken(payload) {
         return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-            expiresIn: '1h',
+            // expiresIn: '1h',
         });
     }
 
@@ -19,14 +19,22 @@ class UserController {
         }
 
         try {
+            const userFound = await User.findOne({
+                where: {
+                    userName: userName,
+                },
+            });
+            if (userFound) {
+                return res.status(400).json({ error: 'User already exists' });
+            }
             await AdafruitService.createGroup(userName);
             const user = await User.create({
                 userName: userName,
                 password: password,
             });
-            res.status(201).send(user);
+            res.status(201).json(user);
         } catch (error) {
-            res.sendStatus(400);
+            res.status(500).json({ error: 'Internal server error' });
         }
     }
 

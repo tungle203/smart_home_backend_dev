@@ -19,7 +19,7 @@
   "main": "server.js",
   "scripts": {
     "start": "nodemon src/server.js",
-    "data": "node src/resources/data.js",
+    "seed": "node src/resources/data.js",
     "prettier": "prettier --single-quote --trailing-comma all --tab-width 4 --write 'src/**/*.{js,json,scss}'",
     "test": "mocha src/test/*.js"
   },

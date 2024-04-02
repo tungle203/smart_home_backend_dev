@@ -1,14 +1,13 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const path = require('path');
 
-
 const sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: path.join(__dirname, '../../db.sqlite'),
-    logging: false
+    logging: false,
 });
 
-const db = {}
+const db = {};
 
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
@@ -17,6 +16,7 @@ db.user = require('./user.model')(sequelize, DataTypes);
 db.room = require('./room.model')(sequelize, DataTypes);
 db.deviceType = require('./deviceType.model')(sequelize, DataTypes);
 db.device = require('./device.model')(sequelize, DataTypes);
+db.log = require('./log.model')(sequelize, DataTypes);
 
 db.user.hasMany(db.room);
 db.room.belongsTo(db.user);
@@ -30,6 +30,12 @@ db.device.belongsTo(db.room);
 db.deviceType.hasMany(db.device);
 db.device.belongsTo(db.deviceType);
 
+db.device.hasMany(db.log);
+db.log.belongsTo(db.device);
+
+db.user.hasMany(db.log);
+db.log.belongsTo(db.user);
+
 db.sequelize.sync();
 
-module.exports = db
+module.exports = db;

@@ -9,7 +9,11 @@ class DeviceTypeController {
             return res.status(400).json({ error: 'Name are required' });
         }
         try {
-            const device = await DeviceType.create({ name, description, UserId: req.userId});
+            const device = await DeviceType.create({
+                name,
+                description,
+                UserId: req.userId,
+            });
             return res.status(201).json(device);
         } catch (error) {
             return res.status(500).json({ error: 'Internal server error' });
@@ -17,11 +21,7 @@ class DeviceTypeController {
     }
     async getDeviceType(req, res) {
         try {
-            const devices = await DeviceType.findAll({
-                where: {
-                    UserId: req.userId
-                }
-            });
+            const devices = await DeviceType.findAll();
             return res.status(200).json(devices);
         } catch (error) {
             return res.status(500).json({ error: 'Internal server error' });

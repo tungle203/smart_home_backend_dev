@@ -8,9 +8,11 @@ class RoomController {
         if (!name) {
             return res.status(400).json({ error: 'Name is required' });
         }
-        console.log(req.userId);
+        if (name === 'Entire house') {
+            return res.status(400).json({ error: 'Invalid name' });
+        }
         try {
-            const room = await Room.create({ name, UserId: req.userId});
+            const room = await Room.create({ name, UserId: req.userId });
             return res.status(201).json(room);
         } catch (error) {
             return res.status(500).json({ error: 'Internal server error' });
@@ -20,8 +22,8 @@ class RoomController {
         try {
             const rooms = await Room.findAll({
                 where: {
-                    UserId: req.userId
-                }
+                    UserId: req.userId,
+                },
             });
             return res.status(200).json(rooms);
         } catch (error) {

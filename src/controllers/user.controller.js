@@ -3,6 +3,7 @@ require('dotenv').config();
 
 const db = require('../models/index.model');
 const User = db.user;
+const Room = db.room;
 const AdafruitService = require('../services/adafruit.service');
 
 class UserController {
@@ -32,6 +33,10 @@ class UserController {
                 userName: userName,
                 password: password,
             });
+            await Room.create({
+                name: 'Entire house',
+                UserId: user.id,
+            });
             res.status(201).json(user);
         } catch (error) {
             res.status(500).json({ error: 'Internal server error' });
@@ -52,7 +57,10 @@ class UserController {
         if (!user) {
             return res.status(404).send('User not found');
         }
-        const accessToken = await UserController.generateToken({ userId: user.id, userName: user.userName});
+        const accessToken = await UserController.generateToken({
+            userId: user.id,
+            userName: user.userName,
+        });
         res.status(200).send({ accessToken });
     }
 }

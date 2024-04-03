@@ -20,11 +20,38 @@ class DeviceController {
                 const feedValue = lastFeedValue.find(
                     (feed) => feed.name === device.feedName,
                 );
-                const newStatus = feedValue.last_value === '0' ? false : true;
-                devices[index].status = newStatus;
-                await device.update({ status: newStatus });
+                if(device.value !== feedValue.last_value) {
+                    const newStatus = feedValue.last_value === '0' ? false : true;
+                    devices[index].status = newStatus;
+                    devices[index].value = feedValue.last_value;
+                    await device.update({ status: newStatus, value: feedValue.last_value});
+                }
             });
             return res.status(200).json(devices);
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async getDevice(req, res) {
+        const { id } = req.params;
+        const days = req.query.days || 5;
+        const resolution = req.query.resolution;
+        if (!id) {
+            return res.status(400).json({ error: 'Id device is required' });
+        }
+        try {
+            const device = await Device.findByPk(id);
+            if (!device || device.UserId !== req.userId) {
+                return res.status(404).json({ error: 'Device not found' });
+            }
+            const startTime = new Date(new Date().getTime() - (days * 24 * 60 * 60 * 1000)).toUTCString();
+            const endTime = new Date().toUTCString();
+
+            const data = await AdafruitService.getDataChart(
+                req.userName,device.feedName, startTime, endTime, resolution,
+            )
+            return res.status(200).json(data.data);
         } catch (error) {
             return res.status(500).json({ error: 'Internal server error' });
         }
@@ -52,6 +79,10 @@ class DeviceController {
                 room.name === 'Entire house'
             ) {
                 return res.status(400).json({ error: 'Invalid device' });
+            } else {
+                room.update({ deviceCount: room.deviceCount + 1})
+                const house = await Room.findOne({ where: { name: 'Entire house' } });
+                house.update({ deviceCount: house.deviceCount + 1 });
             }
 
             const feedName = name.toLowerCase().replace(/ /g, '-');

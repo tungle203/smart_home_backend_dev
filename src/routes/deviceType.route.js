@@ -3,7 +3,7 @@ const router = express.Router();
 
 const DeviceTypeController = require('../controllers/deviceType.controller');
 const verifyToken = require('../middlewares/auth');
-router.get('/get', DeviceTypeController.getDeviceType);
-router.post('/add', verifyToken, DeviceTypeController.createDeviceType);
+router.get('/', DeviceTypeController.getDeviceType);
+router.post('/', verifyToken, DeviceTypeController.createDeviceType);
 
 module.exports = router;

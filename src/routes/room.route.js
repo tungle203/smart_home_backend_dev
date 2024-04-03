@@ -4,7 +4,7 @@ const router = express.Router();
 const verifyToken = require('../middlewares/auth');
 const RoomController = require('../controllers/room.controller');
 
-router.get('/get', verifyToken, RoomController.getRooms);
-router.post('/add', verifyToken, RoomController.createRoom);
+router.get('/', verifyToken, RoomController.getRooms);
+router.post('/', verifyToken, RoomController.createRoom);
 
 module.exports = router;

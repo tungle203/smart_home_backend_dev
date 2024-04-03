@@ -4,8 +4,9 @@ const router = express.Router();
 const DeviceController = require('../controllers/device.controller');
 const verifyToken = require('../middlewares/auth');
 
-router.get('/get', verifyToken, DeviceController.getDevices);
-router.post('/add', verifyToken, DeviceController.createDevice);
 router.put('/toggle/:id', verifyToken, DeviceController.toggleStatus);
 router.put('/fan/:id', verifyToken, DeviceController.controlFanSpeed);
+router.get('/:id', verifyToken, DeviceController.getDevice);
+router.get('/', verifyToken, DeviceController.getDevices);
+router.post('/', verifyToken, DeviceController.createDevice);
 module.exports = router;

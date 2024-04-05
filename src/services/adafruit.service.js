@@ -69,7 +69,13 @@ class AdafruitService {
         return response.data.feeds;
     }
 
-    async getDataChart(groupKey, feedName, start_time, end_time, resolution = 1) {
+    async getDataChart(
+        groupKey,
+        feedName,
+        start_time,
+        end_time,
+        resolution = 1,
+    ) {
         const feedKey = groupKey + '.' + feedName;
         const response = await axios.get(
             `https://io.adafruit.com/api/v2/${this.userName}/feeds/${feedKey}/data/chart?start_time=${start_time}&end_time=${end_time}&resolution=${resolution}`,

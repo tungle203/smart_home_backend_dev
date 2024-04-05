@@ -1,23 +1,18 @@
-const AdafruitService = require('../services/adafruit.service');
-const { createLogs } = require('../services/log.service');
-const db = require('../models/index.model');
-const Log = db.log;
-const Device = db.device;
-const DeviceType = db.deviceType;
-const User = db.user;
-const Room = db.room;
+const LogService = require('../services/log.service');
+// const AdafruitService = require('../services/adafruit.service');
+// const db = require('../models/index.model');
 
 class LogController {
     constructor() {
         this.intervalCreateLog = setInterval(async () => {
             try {
-                LogController.logs = await createLogs();
+                LogController.logs = await LogService.createLogs();
             } catch (error) {
                 console.log(error);
             }
         }, 30000);
     }
-    // create a static attribute to store the logs
+
     static logs = [];
 
     getLogs(req, res) {

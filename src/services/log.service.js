@@ -2,36 +2,14 @@ const AdafruitService = require('./adafruit.service');
 
 const db = require('../models/index.model');
 const Log = db.log;
-const Device = db.device;
-const DeviceType = db.deviceType;
+const Sensor = db.sensor;
+const SensorType = db.sensorType;
 const User = db.user;
-const Room = db.room;
 
 class LogService {
-    async getWarningFromFeed(userName, feedKey) {
-        const data = await AdafruitService.getDataChart(
-            userName,
-            feedKey,
-            new Date(new Date().getTime() - 30000).toUTCString(),
-            new Date().toUTCString(),
-        );
-        return data.data;
-    }
-
-    async createLog(userId, deviceId, message, value, date) {
-        const log = await Log.create({
-            message: message,
-            value: value,
-            date: date,
-            UserId: userId,
-            DeviceId: deviceId,
-        });
-        return log;
-    }
-
-    async makeDeviceWarning(
+    async createLogWhenExceedingThreshold(
         userId,
-        deviceId,
+        sensorId,
         value,
         lowerMessage,
         upperMessage,
@@ -40,84 +18,60 @@ class LogService {
         upper,
     ) {
         if (value < lower) {
-            return await this.createLog(
-                userId,
-                deviceId,
-                lowerMessage,
-                value,
-                date,
-            );
+            return await Log.create({
+                message: lowerMessage,
+                value: value,
+                date: date,
+                UserId: userId,
+                SensorId: sensorId,
+            });
         }
         if (value > upper) {
-            return await this.createLog(
-                userId,
-                deviceId,
-                upperMessage,
-                value,
-                date,
-            );
+            return await Log.create({
+                message: upperMessage,
+                value: value,
+                date: date,
+                UserId: userId,
+                SensorId: sensorId,
+            });
         }
     }
 
     async createLogs() {
         const logs = [];
 
-        const deviceTypes = await DeviceType.findAll();
-        const humidityType = deviceTypes.find(
-            (deviceType) => deviceType.name === 'Humidity',
-        );
-        const temperatureType = deviceTypes.find(
-            (deviceType) => deviceType.name === 'Temperature',
-        );
+        const sensorTypes = await SensorType.findAll();
 
         const users = await User.findAll();
         for (const user of users) {
-            const rooms = await Room.findAll({
-                where: {
-                    UserId: user.id,
-                    name: 'Entire house',
-                },
+            const sensors = await Sensor.findAll({
+                where: { UserId: user.id },
             });
-            const devices = await Device.findAll({
-                where: {
-                    UserId: user.id,
-                    RoomId: rooms[0].id,
-                },
-            });
-            for (const device of devices) {
-                const data = await this.getWarningFromFeed(
+            for (const sensor of sensors) {
+                const data = await AdafruitService.getDataChart(
                     user.userName,
-                    device.feedName,
+                    sensor.feedName,
+                    new Date(new Date().getTime() - 30000).toUTCString(),
+                    new Date().toUTCString(),
                 );
-
-                for (const dataPoint of data) {
+                const sensorType = sensorTypes.find(
+                    (sensorType) => sensorType.id === sensor.SensorTypeId,
+                );
+                for (const dataPoint of data.data) {
                     const value = dataPoint[1];
                     const date = new Date(dataPoint[0]);
-                    if (device.DeviceTypeId === humidityType.id) {
-                        const result = await this.makeDeviceWarning(
-                            user.id,
-                            device.id,
-                            value,
-                            'Humidity is too low',
-                            'Humidity is too high',
-                            date,
-                            30,
-                            70,
-                        );
-                        logs.push(result);
-                    }
-                    if (device.DeviceTypeId === temperatureType.id) {
-                        const result = await this.makeDeviceWarning(
-                            user.id,
-                            device.id,
-                            value,
-                            'Temperature is too low',
-                            'Temperature is too high',
-                            date,
-                            20,
-                            30,
-                        );
-                        logs.push(result);
+                    const log = await this.createLogWhenExceedingThreshold(
+                        user.id,
+                        sensor.id,
+                        value,
+                        `The value of the sensor ${sensor.name} is below the lower threshold of ${sensorType.lowerThreshold}`,
+                        `The value of the sensor ${sensor.name} is above the upper threshold of ${sensorType.upperThreshold}`,
+                        date,
+                        sensorType.lowerThreshold,
+                        sensorType.upperThreshold,
+                    );
+                    if (log) {
+                        logs.push(log);
                     }
                 }
             }

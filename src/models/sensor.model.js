@@ -1,14 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
-    const Device = sequelize.define('Device', {
+    const Sensor = sequelize.define('Sensor', {
         name: {
             type: DataTypes.STRING,
             allowNull: false,
             unique: false,
-        },
-        status: {
-            type: DataTypes.BOOLEAN,
-            allowNull: false,
-            defaultValue: false,
         },
         value: {
             type: DataTypes.STRING,
@@ -20,6 +15,5 @@ module.exports = (sequelize, DataTypes) => {
             unique: false,
         },
     });
-
-    return Device;
-};
+    return Sensor;
+}

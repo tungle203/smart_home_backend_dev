@@ -3,6 +3,8 @@ const User = db.user;
 const Room = db.room;
 const DeviceType = db.deviceType;
 const Device = db.device;
+const SensorType = db.sensorType;
+const Sensor = db.sensor;
 
 const data = {
     users: [
@@ -13,78 +15,87 @@ const data = {
     ],
     rooms: [
         {
-            name: 'Entire house',
-            deviceCount: 5,
-            UserId: 1,
-        },
-        {
             name: 'Living room',
-            deviceCount: 2,
+            deviceCount: 1,
             UserId: 1,
         },
         {
             name: 'Kitchen',
-            deviceCount: 2,
+            deviceCount: 1,
             UserId: 1,
         },
     ],
-    deviceTypes: [
+    sensorTypes: [
         {
-            name: 'Light',
-        },
-        {
-            name: 'Led',
-        },
-        {
-            name: 'Fan',
+            name: 'Temperature',
+            upperThreshold: 40,
+            lowerThreshold: 10,
+            UserId: 1,
         },
         {
             name: 'Humidity',
+            upperThreshold: 90,
+            lowerThreshold: 30,
+            UserId: 1,
         },
         {
-            name: 'Temperature',
+            name: 'Light',
+            upperThreshold: 100,
+            lowerThreshold: 0,
+            UserId: 1,
         },
     ],
-    devices: [
+    sensor: [
         {
-            name: 'Light 1',
-            feedName: 'light-1',
+            name: 'Temperature 1',
+            feedName: 'temp-1',
             UserId: 1,
-            RoomId: 2,
-            DeviceTypeId: 1,
-            status: 0,
-        },
-        {
-            name: 'Led 1',
-            feedName: 'led-1',
-            UserId: 1,
-            RoomId: 2,
-            DeviceTypeId: 2,
-            status: 0,
-        },
-        {
-            name: 'Fan 1',
-            feedName: 'fan-1',
-            UserId: 1,
-            RoomId: 3,
-            DeviceTypeId: 3,
-            status: 0,
+            SensorTypeId: 1,
+            value: 0,
         },
         {
             name: 'Humidity 1',
             feedName: 'humidity-1',
             UserId: 1,
-            RoomId: 1,
-            DeviceTypeId: 4,
-            status: 0,
+            SensorTypeId: 2,
+            value: 0,
         },
         {
-            name: 'Temp 1',
-            feedName: 'temp-1',
+            name: 'Light 1',
+            feedName: 'light-1',
+            UserId: 1,
+            SensorTypeId: 3,
+            value: 0,
+        },
+    ],
+    deviceTypes: [
+        {
+            name: 'Led',
+            UserId: 1,
+        },
+        {
+            name: 'Fan',
+            UserId: 1,
+        },
+    ],
+    devices: [
+        {
+            name: 'Led 1',
+            feedName: 'led-1',
+            UserId: 1,
+            RoomId: 2,
+            DeviceTypeId: 1,
+            status: 0,
+            value: 0,
+        },
+        {
+            name: 'Fan 1',
+            feedName: 'fan-1',
             UserId: 1,
             RoomId: 1,
-            DeviceTypeId: 5,
+            DeviceTypeId: 2,
             status: 0,
+            value: 0,
         },
     ],
 };
@@ -94,6 +105,8 @@ try {
     Room.bulkCreate(data.rooms);
     DeviceType.bulkCreate(data.deviceTypes);
     Device.bulkCreate(data.devices);
+    SensorType.bulkCreate(data.sensorTypes);
+    Sensor.bulkCreate(data.sensor);
     console.log('Data inserted successfully');
 } catch (error) {
     console.log(error);

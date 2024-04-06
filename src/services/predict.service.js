@@ -4,11 +4,11 @@ const fs = require('fs');
 const AdafruitService = require('./adafruit.service');
 const db = require('../models/index.model');
 const path = require('path');
-const Device = db.device;
 const User = db.user;
-const DeviceType = db.deviceType;
-class DeviceService {
-    convert(date) {
+const Sensor = db.sensor;
+
+class PredictService {
+    convertDateToNum(date) {
         const hour = date.getHours();
         const minute = date.getMinutes();
         const second = date.getSeconds();
@@ -25,7 +25,7 @@ class DeviceService {
 
         const outlierThreshold = 3 * stdDev;
 
-        const cleanData = data.forEach((data) => {
+        data.forEach((data) => {
             const value = parseFloat(data[1]);
 
             if (Math.abs(value - mean) > outlierThreshold) {
@@ -33,20 +33,21 @@ class DeviceService {
             } else {
                 data[1] = value;
             }
+
+            data[0] = this.convertDateToNum(new Date(data[0]))
         });
 
-        return cleanData;
+        return data;
     }
 
-    async makePredictModel(userName, feedName, data) {
+    makePredictModel(userName, feedName, data) {
         const net = new brain.recurrent.LSTMTimeStep({
             inputSize: 1,
             hiddenLayers: [10],
             outputSize: 1,
         });
-
         const trainingData = data.map((data) => ({
-            input: [this.convert(new Date(data[0]))],
+            input: [data[0]],
             output: [data[1]],
         }));
 
@@ -66,41 +67,38 @@ class DeviceService {
         );
     }
 
-    async predicts(deviceType, days) {
+    async predicts(days) {
         const users = await User.findAll();
-        const deviceTypes = await DeviceType.findAll({
-            where: { name: deviceType },
-        });
         users.forEach(async (user) => {
-            const devices = await Device.findAll({
+            const sensors = await Sensor.findAll({
                 where: {
                     UserId: user.id,
-                    DeviceTypeId: deviceTypes.map(
-                        (deviceType) => deviceType.id,
-                    ),
                 },
             });
-            devices.forEach(async (device) => {
-                const data = await AdafruitService.getDataChart(
+            sensors.forEach(async (sensor) => {
+                const response = await AdafruitService.getDataChart(
                     user.userName,
-                    device.feedName,
+                    sensor.feedName,
                     new Date(
                         new Date().getTime() - days * 24 * 60 * 60 * 1000,
                     ).toUTCString(),
                     new Date().toUTCString(),
                 );
-                if (data.data.length === 0) return;
-                await this.makePredictModel(
+
+                if (response.data.length === 0) return;
+                const cleanData = this.cleanData(response.data);
+                this.makePredictModel(
                     user.userName,
-                    device.feedName,
-                    this.cleanData(data.data),
+                    sensor.feedName,
+                    cleanData,
                 );
+
                 console.log(
-                    `Predict model for ${device.feedName} of ${user.userName} is done`,
+                    `Predict model for ${sensor.feedName} of ${user.userName} is done`,
                 );
             });
         });
     }
 }
 
-module.exports = new DeviceService();
+module.exports = new PredictService();

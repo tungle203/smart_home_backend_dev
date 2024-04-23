@@ -83,6 +83,15 @@ class AdafruitService {
         );
         return response.data;
     }
+
+    async getLastFeedData(groupKey, feedName) {
+        const feedKey = groupKey + '.' + feedName;
+        const response = await axios.get(
+            `https://io.adafruit.com/api/v2/${this.userName}/feeds/${feedKey}/data/last`,
+            config,
+        );
+        return response.data;
+    }
 }
 
 module.exports = new AdafruitService();

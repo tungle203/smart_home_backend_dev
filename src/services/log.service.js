@@ -54,6 +54,12 @@ class LogService {
                     new Date(new Date().getTime() - 30000).toUTCString(),
                     new Date().toUTCString(),
                 );
+
+                if(data.data.length !== 0) {
+                    await sensor.update({
+                        value: data.data[data.data.length - 1][1],
+                    });
+                }
                 const sensorType = sensorTypes.find(
                     (sensorType) => sensorType.id === sensor.SensorTypeId,
                 );

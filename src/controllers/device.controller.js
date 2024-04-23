@@ -1,3 +1,5 @@
+const escapeHtml = require('escape-html');
+
 const AdafruitService = require('../services/adafruit.service');
 
 const db = require('../models/index.model');
@@ -7,7 +9,9 @@ const DeviceType = db.deviceType;
 
 class DeviceController {
     async createDeviceType(req, res) {
-        const { name, description } = req.body;
+        let { name, description } = req.body;
+        name = escapeHtml(name);
+        description = escapeHtml(description);
         if (!name) {
             return res.status(400).json({ error: 'Name are required' });
         }
@@ -25,8 +29,10 @@ class DeviceController {
 
     async getDeviceType(req, res) {
         try {
-            const devices = await DeviceType.findAll();
-            return res.status(200).json(devices);
+            const deviceTypes = await DeviceType.findAll({
+                where: { UserId: req.userId },
+            });
+            return res.status(200).json(deviceTypes);
         } catch (error) {
             return res.status(500).json({ error: 'Internal server error' });
         }
@@ -64,7 +70,35 @@ class DeviceController {
         }
     }
 
-    async getDevice(req, res) {
+    async getDeviceInfo(req, res) {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ error: 'Id device is required' });
+        }
+        try {
+            const device = await Device.findByPk(id);
+            if (!device || device.UserId !== req.userId) {
+                return res.status(404).json({ error: 'Device not found' });
+            }
+            const feedValue = await AdafruitService.getLastFeedData(
+                req.userName,
+                device.feedName,
+            );
+
+            const lastData = feedValue?.value
+            if(lastData !== undefined){
+                await device.update({ value: lastData,
+                    status: lastData === '0' ? false : true 
+                    });
+            }
+
+            return res.status(200).json(device);
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async getDeviceData(req, res) {
         const { id } = req.params;
         const days = req.query.days || 5;
         const resolution = req.query.resolution;
@@ -114,15 +148,18 @@ class DeviceController {
 
             const device = await Device.create({
                 name,
-                feedName: "",
+                feedName: '',
                 RoomId: roomId,
                 DeviceTypeId: deviceTypeId,
                 UserId: req.userId,
             });
 
             const feedName = name.toLowerCase().replace(/ /g, '-');
-            device.feedName = req.userName + '-' + feedName + '-' + device.id;
-            await AdafruitService.createFeedInGroup(device.feedName, req.userName);
+            device.feedName = feedName + '-' + device.id + '-device';
+            await AdafruitService.createFeedInGroup(
+                device.feedName,
+                req.userName,
+            );
             await device.save();
             return res.status(201).json(device);
         } catch (error) {
@@ -130,51 +167,21 @@ class DeviceController {
         }
     }
 
-    async toggleStatus(req, res) {
+    async controlDevice(req, res) {
         const { id } = req.params;
-        if (!id) {
-            return res.status(400).json({ error: 'Id device are required' });
-        }
-        try {
-            const device = await Device.findByPk(id);
-            if (!device || device.UserId !== req.userId) {
-                return res.status(404).json({ error: 'Device not found' });
-            }
-            const status = !device.status;
-            const feedValue = status ? 1 : 0;
-            await AdafruitService.createData(
-                req.userName,
-                device.feedName,
-                feedValue,
-            );
-            await device.update({ status });
-            return res.sendStatus(200);
-        } catch (error) {
-            return res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-
-    async controlFanSpeed(req, res) {
-        const { id } = req.params;
-        const { speed } = req.body;
-        if (!id || !speed) {
+        const { value } = req.body;
+        if (!id || value === undefined) {
             return res
                 .status(400)
-                .json({ error: 'Id device and speed are required' });
+                .json({ error: 'Id device and value are required' });
         }
         try {
             const device = await Device.findByPk(id);
-            const deviceType = await DeviceType.findByPk(device.DeviceTypeId);
-            if (deviceType.name !== 'Fan') {
-                return res
-                    .status(400)
-                    .json({ error: 'This device is not a fan' });
-            }
 
             if (!device || device.UserId !== req.userId) {
                 return res.status(404).json({ error: 'Device not found' });
             }
-            const feedValue = speed;
+            const feedValue = value;
             await AdafruitService.createData(
                 req.userName,
                 device.feedName,

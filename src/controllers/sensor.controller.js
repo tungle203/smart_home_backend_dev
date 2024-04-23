@@ -11,13 +11,16 @@ const SensorType = db.sensorType;
 const User = db.user;
 class SensorController {
     constructor() {
-        const predictModelInterval = setInterval(async () => {
-            try {
-                PredictService.predicts(5);
-            } catch (error) {
+        this.predictModelInterval = setInterval(
+            async () => {
+                try {
+                    PredictService.predicts(5);
+                } catch (error) {
                     console.log(error);
                 }
-            }, 5 * 24 * 60 * 60 * 1000);
+            },
+            5 * 24 * 60 * 60 * 1000,
+        );
     }
 
     destroy() {
@@ -40,7 +43,9 @@ class SensorController {
     async createSensorType(req, res) {
         const { name, upperThreshold, lowerThreshold, description } = req.body;
         if (!name || !upperThreshold || !lowerThreshold) {
-            return res.status(400).json({ message: 'Please provide all required fields' });
+            return res
+                .status(400)
+                .json({ message: 'Please provide all required fields' });
         }
         try {
             const sensorType = await SensorType.create({
@@ -59,23 +64,72 @@ class SensorController {
     async createSensor(req, res) {
         const { name, sensorTypeId } = req.body;
         if (!name || !sensorTypeId) {
-            return res.status(400).json({ message: 'Please provide all required fields' });
+            return res
+                .status(400)
+                .json({ message: 'Please provide all required fields' });
         }
         try {
             const sensor = await Sensor.create({
                 name,
-                feedName: "",
+                feedName: '',
                 SensorTypeId: sensorTypeId,
                 UserId: req.userId,
             });
 
-            const feedName = name.toUpperCase().replace(/ /g, "-");
-            sensor.feedName = req.userName + '-' + feedName + '-' + sensor.id;
-            await AdafruitService.createFeedInGroup(sensor.feedName, req.userName);
+            const feedName = name.toLowerCase().replace(/ /g, '-');
+            sensor.feedName = feedName + '-' + sensor.id + '-sensor';
+            await AdafruitService.createFeedInGroup(
+                sensor.feedName,
+                req.userName,
+            );
             await sensor.save();
             res.status(201).json(sensor);
         } catch (error) {
             res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async getSensors(req, res) {
+        try {
+            const sensor = await Sensor.findAll({
+                where: {
+                    UserId: req.userId,
+                },
+            });
+            res.status(200).json(sensor);
+        } catch (error) {
+            res.status(500).json(error);
+        }
+    }
+
+    async getSensorData(req, res) {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ error: 'Id sensor are required' });
+        }
+        const days = req.query.days || 5;
+        const resolution = req.query.resolution;
+
+        try {
+            const sensor = await Sensor.findByPk(id);
+            if (!sensor || sensor.UserId !== req.userId) {
+                return res.status(404).json({ error: 'Sensor not found' });
+            }
+            const startTime = new Date(
+                new Date().getTime() - days * 24 * 60 * 60 * 1000,
+            ).toUTCString();
+            const endTime = new Date().toUTCString();
+
+            const data = await AdafruitService.getDataChart(
+                req.userName,
+                sensor.feedName,
+                startTime,
+                endTime,
+                resolution,
+            );
+            res.status(200).json({ sensor, data: data.data });
+        } catch (error) {
+            res.status(500).json(error);
         }
     }
 
@@ -118,7 +172,6 @@ class SensorController {
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
-
 }
 
 module.exports = new SensorController();

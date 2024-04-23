@@ -6,11 +6,11 @@ module.exports = (sequelize, DataTypes) => {
             unique: false,
         },
         upperThreshold: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.FLOAT,
             allowNull: false,
         },
         lowerThreshold: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.FLOAT,
             allowNull: false,
         },
         description: {

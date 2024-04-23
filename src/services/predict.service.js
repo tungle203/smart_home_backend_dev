@@ -34,7 +34,7 @@ class PredictService {
                 data[1] = value;
             }
 
-            data[0] = this.convertDateToNum(new Date(data[0]))
+            data[0] = this.convertDateToNum(new Date(data[0]));
         });
 
         return data;

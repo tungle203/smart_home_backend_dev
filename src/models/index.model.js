@@ -19,6 +19,7 @@ db.deviceType = require('./deviceType.model')(sequelize, DataTypes);
 db.sensor = require('./sensor.model')(sequelize, DataTypes);
 db.sensorType = require('./sensorType.model')(sequelize, DataTypes);
 db.log = require('./log.model')(sequelize, DataTypes);
+db.event = require('./event.model')(sequelize, DataTypes);
 
 
 db.user.hasMany(db.room);
@@ -39,6 +40,9 @@ db.sensorType.belongsTo(db.user);
 db.user.hasMany(db.sensor);
 db.sensor.belongsTo(db.user);
 
+db.user.hasMany(db.event);
+db.event.belongsTo(db.user);
+
 db.sensorType.hasMany(db.sensor);
 db.sensor.belongsTo(db.sensorType);
 
@@ -48,9 +52,14 @@ db.device.belongsTo(db.room);
 db.deviceType.hasMany(db.device);
 db.device.belongsTo(db.deviceType);
 
+db.device.hasMany(db.event);
+db.event.belongsTo(db.device);
+
 db.sensor.hasMany(db.log);
 db.log.belongsTo(db.sensor);
 
+db.sensor.hasMany(db.event);
+db.event.belongsTo(db.sensor);
 
 db.sequelize.sync();
 

@@ -10,7 +10,7 @@ const data = {
     users: [
         {
             userName: 'tungle',
-            password: '123456',
+            password: '$2b$10$qkD9xP8zU9e1CwZWej9xpetOnKw2hjCjMxr16Nul1SEfO9H0dW4uS',
         },
     ],
     rooms: [
@@ -48,21 +48,21 @@ const data = {
     sensor: [
         {
             name: 'Temperature 1',
-            feedName: 'temp-1',
+            feedName: 'temperature1-1-sensor',
             UserId: 1,
             SensorTypeId: 1,
             value: 0,
         },
         {
             name: 'Humidity 1',
-            feedName: 'humidity-1',
+            feedName: 'humidity1-2-sensor',
             UserId: 1,
             SensorTypeId: 2,
             value: 0,
         },
         {
             name: 'Light 1',
-            feedName: 'light-1',
+            feedName: 'light1-3-sensor',
             UserId: 1,
             SensorTypeId: 3,
             value: 0,
@@ -81,7 +81,7 @@ const data = {
     devices: [
         {
             name: 'Led 1',
-            feedName: 'led-1',
+            feedName: 'led1-1-device',
             UserId: 1,
             RoomId: 2,
             DeviceTypeId: 1,
@@ -90,7 +90,7 @@ const data = {
         },
         {
             name: 'Fan 1',
-            feedName: 'fan-1',
+            feedName: 'fan1-2-device',
             UserId: 1,
             RoomId: 1,
             DeviceTypeId: 2,

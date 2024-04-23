@@ -1,22 +1,14 @@
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
-
+const uuidv4 = require('uuid').v4;
+const bcrypt = require('bcrypt');
 const db = require('../models/index.model');
 const User = db.user;
-const Room = db.room;
 const AdafruitService = require('../services/adafruit.service');
 
-class UserController {
-    static async generateToken(payload) {
-        return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-            // expiresIn: '1h',
-        });
-    }
-
+class AuthController {
     async register(req, res) {
         const { userName, password } = req.body;
         if (!userName || !password) {
-            return res.status(400).send('Invalid input');
+            return res.status(400).json({ error: 'Invalid input' });
         }
 
         try {
@@ -29,15 +21,16 @@ class UserController {
                 return res.status(400).json({ error: 'User already exists' });
             }
             await AdafruitService.createGroup(userName);
+
+            const hashedPassword = await bcrypt.hash(password, 10);
             const user = await User.create({
                 userName: userName,
-                password: password,
+                password: hashedPassword,
             });
-            await Room.create({
-                name: 'Entire house',
-                UserId: user.id,
+            res.status(201).json({
+                userId: user.id,
+                userName: user.userName,
             });
-            res.status(201).json(user);
         } catch (error) {
             res.status(500).json({ error: 'Internal server error' });
         }
@@ -51,18 +44,43 @@ class UserController {
         const user = await User.findOne({
             where: {
                 userName: userName,
-                password: password,
             },
         });
         if (!user) {
             return res.status(404).send('User not found');
         }
-        const accessToken = await UserController.generateToken({
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).send('Invalid password');
+        }
+        
+        const sessionID = uuidv4();
+
+        req.session[sessionID] = {
+            userId: user.id,
+            userName: user.userName,
+        };
+        res.setHeader(
+            'Set-Cookie',
+            `sessionID=${sessionID}; HttpOnly; Max-Age=${1000 * 60 * 60 * 24}`,
+            'domain=localhost',
+        );
+        res.status(200).json({
             userId: user.id,
             userName: user.userName,
         });
-        res.status(200).send({ accessToken });
+    }
+
+    async logout(req, res) {
+        const sessionId = req.cookies.sessionID;
+        if (!sessionId) {
+            return res.status(401).send('Access Denied');
+        }
+        delete req.session[sessionId];
+        res.setHeader('Set-Cookie', 'sessionID=; HttpOnly; Max-Age=0');
+        res.status(200).send('Logged out');
     }
 }
 
-module.exports = new UserController();
+module.exports = new AuthController();

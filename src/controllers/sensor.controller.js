@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const brain = require('brain.js');
+const escapeHtml = require('escape-html');
 
 const AdafruitService = require('../services/adafruit.service');
 const PredictService = require('../services/predict.service');
@@ -8,7 +9,8 @@ const PredictService = require('../services/predict.service');
 const db = require('../models/index.model');
 const Sensor = db.sensor;
 const SensorType = db.sensorType;
-const User = db.user;
+const sequelize = db.sequelize;
+
 class SensorController {
     constructor() {
         this.predictModelInterval = setInterval(
@@ -31,6 +33,7 @@ class SensorController {
         try {
             const sensorType = await SensorType.findAll({
                 where: {
+                    deleted: false,
                     UserId: req.userId,
                 },
             });
@@ -41,7 +44,9 @@ class SensorController {
     }
 
     async createSensorType(req, res) {
-        const { name, upperThreshold, lowerThreshold, description } = req.body;
+        let { name, upperThreshold, lowerThreshold, description } = req.body;
+        name = escapeHtml(name);
+        description = escapeHtml(description);
         if (!name || !upperThreshold || !lowerThreshold) {
             return res
                 .status(400)
@@ -61,20 +66,76 @@ class SensorController {
         }
     }
 
+    async updateSensorType(req, res) {
+        const { id } = req.params;
+        let { name, upperThreshold, lowerThreshold, description } = req.body;
+        name = escapeHtml(name);
+        description = escapeHtml(description);
+        if (name === undefined) {
+            return res.status(400).json({ error: 'Name is required' });
+        }
+        try {
+            const sensorType = await SensorType.findByPk(id);
+            if (
+                !sensorType ||
+                sensorType.UserId !== req.userId ||
+                sensorType.deleted
+            ) {
+                return res.status(404).json({ error: 'Sensor type not found' });
+            }
+            await sensorType.update({
+                name: name ?? sensorType.name,
+                upperThreshold: upperThreshold ?? sensorType.upperThreshold,
+                lowerThreshold: lowerThreshold ?? sensorType.lowerThreshold,
+                description: description ?? sensorType.description,
+            });
+            res.status(200).json(sensorType);
+        } catch (error) {
+            res.status(500).json(error);
+        }
+    }
+
+    async deleteSensorType(req, res) {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ error: 'Id is required' });
+        }
+        try {
+            const sensorType = await SensorType.findByPk(id);
+            if (
+                !sensorType ||
+                sensorType.UserId !== req.userId ||
+                sensorType.deleted
+            ) {
+                return res.status(404).json({ error: 'Sensor type not found' });
+            }
+            await sensorType.update({ deleted: true });
+            res.sendStatus(204);
+        } catch (error) {
+            res.status(500).json(error);
+        }
+    }
+
     async createSensor(req, res) {
-        const { name, sensorTypeId } = req.body;
+        let { name } = req.body;
+        name = escapeHtml(name);
+        const { sensorTypeId } = req.body;
         if (!name || !sensorTypeId) {
             return res
                 .status(400)
                 .json({ message: 'Please provide all required fields' });
         }
+        const t = await sequelize.transaction();
         try {
-            const sensor = await Sensor.create({
-                name,
-                feedName: '',
-                SensorTypeId: sensorTypeId,
-                UserId: req.userId,
-            });
+            const sensor = await Sensor.create(
+                {
+                    name,
+                    feedName: '',
+                    SensorTypeId: sensorTypeId,
+                    UserId: req.userId,
+                },
+                { transaction: t },
+            );
 
             const feedName = name.toLowerCase().replace(/ /g, '-');
             sensor.feedName = feedName + '-' + sensor.id + '-sensor';
@@ -83,8 +144,10 @@ class SensorController {
                 req.userName,
             );
             await sensor.save();
+            await t.commit();
             res.status(201).json(sensor);
         } catch (error) {
+            await t.rollback();
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -93,6 +156,7 @@ class SensorController {
         try {
             const sensor = await Sensor.findAll({
                 where: {
+                    deleted: false,
                     UserId: req.userId,
                 },
             });
@@ -112,7 +176,7 @@ class SensorController {
 
         try {
             const sensor = await Sensor.findByPk(id);
-            if (!sensor || sensor.UserId !== req.userId) {
+            if (!sensor || sensor.UserId !== req.userId || sensor.deleted) {
                 return res.status(404).json({ error: 'Sensor not found' });
             }
             const startTime = new Date(
@@ -133,6 +197,46 @@ class SensorController {
         }
     }
 
+    async updateSensor(req, res) {
+        const { id } = req.params;
+        let { name, sensorTypeId } = req.body;
+        name = escapeHtml(name);
+        if (name === undefined) {
+            return res.status(400).json({ error: 'Name is required' });
+        }
+        try {
+            const sensor = await Sensor.findByPk(id);
+            if (!sensor || sensor.UserId !== req.userId || sensor.deleted) {
+                return res.status(404).json({ error: 'Sensor not found' });
+            }
+            await sensor.update({
+                name: name ?? sensor.name,
+                SensorTypeId: sensorTypeId ?? sensor.SensorTypeId,
+            });
+            res.status(200).json(sensor);
+        } catch (error) {
+            res.status(500).json(error);
+        }
+    }
+
+    async deleteSensor(req, res) {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ error: 'Id is required' });
+        }
+        try {
+            const sensor = await Sensor.findByPk(id);
+            if (!sensor || sensor.UserId !== req.userId || sensor.deleted) {
+                return res.status(404).json({ error: 'Sensor not found' });
+            }
+
+            await sensor.update({ deleted: true });
+            res.sendStatus(204);
+        } catch (error) {
+            res.status(500).json(error);
+        }
+    }
+
     async predict(req, res) {
         const { id } = req.params;
         const predictTime = req.query.predictTime || 3;
@@ -141,7 +245,7 @@ class SensorController {
         }
         try {
             const sensor = await Sensor.findByPk(id);
-            if (!sensor || sensor.UserId !== req.userId) {
+            if (!sensor || sensor.UserId !== req.userId || sensor.delete) {
                 return res.status(404).json({ error: 'Sensor not found' });
             }
             const directoryPath = path.join(

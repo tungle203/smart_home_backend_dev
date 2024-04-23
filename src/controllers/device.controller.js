@@ -6,8 +6,23 @@ const db = require('../models/index.model');
 const Device = db.device;
 const Room = db.room;
 const DeviceType = db.deviceType;
+const sequelize = db.sequelize;
 
 class DeviceController {
+    async getDeviceType(req, res) {
+        try {
+            const deviceTypes = await DeviceType.findAll({
+                where: {
+                    deleted: false,
+                    UserId: req.userId,
+                },
+            });
+            return res.status(200).json(deviceTypes);
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
     async createDeviceType(req, res) {
         let { name, description } = req.body;
         name = escapeHtml(name);
@@ -27,12 +42,41 @@ class DeviceController {
         }
     }
 
-    async getDeviceType(req, res) {
+    async updateDeviceType(req, res) {
+        const { id } = req.params;
+        let { name, description } = req.body;
+        name = escapeHtml(name);
+        description = escapeHtml(description);
+        if (!id) {
+            return res.status(400).json({ error: 'Id are required' });
+        }
         try {
-            const deviceTypes = await DeviceType.findAll({
-                where: { UserId: req.userId },
+            const device = await DeviceType.findByPk(id);
+            if (!device || device.UserId !== req.userId || device.deleted) {
+                return res.status(404).json({ error: 'Device type not found' });
+            }
+            await device.update({
+                name: name ?? device.name,
+                description: description ?? device.description,
             });
-            return res.status(200).json(deviceTypes);
+            return res.status(200).json(device);
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async deleteDeviceType(req, res) {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ error: 'Id are required' });
+        }
+        try {
+            const device = await DeviceType.findByPk(id);
+            if (!device || device.UserId !== req.userId || device.deleted) {
+                return res.status(404).json({ error: 'Device type not found' });
+            }
+            await device.update({ deleted: true });
+            return res.sendStatus(204);
         } catch (error) {
             return res.status(500).json({ error: 'Internal server error' });
         }
@@ -44,7 +88,10 @@ class DeviceController {
                 req.userName,
             );
             const devices = await Device.findAll({
-                where: { UserId: req.userId },
+                where: {
+                    deleted: false,
+                    UserId: req.userId,
+                },
             });
             devices.forEach(async (device, index) => {
                 const feedValue = lastFeedValue.find(
@@ -77,7 +124,7 @@ class DeviceController {
         }
         try {
             const device = await Device.findByPk(id);
-            if (!device || device.UserId !== req.userId) {
+            if (!device || device.UserId !== req.userId || device.deleted) {
                 return res.status(404).json({ error: 'Device not found' });
             }
             const feedValue = await AdafruitService.getLastFeedData(
@@ -85,11 +132,12 @@ class DeviceController {
                 device.feedName,
             );
 
-            const lastData = feedValue?.value
-            if(lastData !== undefined){
-                await device.update({ value: lastData,
-                    status: lastData === '0' ? false : true 
-                    });
+            const lastData = feedValue?.value;
+            if (lastData !== undefined) {
+                await device.update({
+                    value: lastData,
+                    status: lastData === '0' ? false : true,
+                });
             }
 
             return res.status(200).json(device);
@@ -107,7 +155,7 @@ class DeviceController {
         }
         try {
             const device = await Device.findByPk(id);
-            if (!device || device.UserId !== req.userId) {
+            if (!device || device.UserId !== req.userId || device.deleted) {
                 return res.status(404).json({ error: 'Device not found' });
             }
             const startTime = new Date(
@@ -135,15 +183,21 @@ class DeviceController {
                 .status(400)
                 .json({ error: 'Name, roomId and deviceTypeId are required' });
         }
+        const t = await sequelize.transaction();
         try {
             const deviceType = await DeviceType.findByPk(deviceTypeId);
-            if (!deviceType) {
+            if (
+                !deviceType ||
+                deviceType.UserId !== req.userId ||
+                deviceType.deleted
+            ) {
                 return res.status(404).json({ error: 'Device type not found' });
             }
             const room = await Room.findByPk(roomId);
-            if (!room) {
+            if (!room || room.UserId !== req.userId || room.deleted) {
                 return res.status(404).json({ error: 'Room not found' });
             }
+
             await room.update({ deviceCount: room.deviceCount + 1 });
 
             const device = await Device.create({
@@ -161,8 +215,93 @@ class DeviceController {
                 req.userName,
             );
             await device.save();
+            await t.commit();
             return res.status(201).json(device);
         } catch (error) {
+            await t.rollback();
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async updateDevice(req, res) {
+        const { id } = req.params;
+        const { name, roomId, deviceTypeId } = req.body;
+        if (!id) {
+            return res.status(400).json({ error: 'Id device is required' });
+        }
+        const t = await sequelize.transaction();
+        try {
+            const device = await Device.findByPk(id);
+            if (!device || device.UserId !== req.userId || device.deleted) {
+                return res.status(404).json({ error: 'Device not found' });
+            }
+            const room = await Promise.all([
+                Room.findByPk(roomId),
+                Room.findByPk(device.RoomId),
+            ]);
+            const newRoom = room[0];
+            const oldRoom = room[1];
+
+            if (!newRoom || newRoom.UserId !== req.userId || newRoom.deleted) {
+                return res.status(404).json({ error: 'Room not found' });
+            }
+            const deviceType = await DeviceType.findByPk(deviceTypeId);
+            if (
+                !deviceType ||
+                deviceType.UserId !== req.userId ||
+                deviceType.deleted
+            ) {
+                return res.status(404).json({ error: 'Device type not found' });
+            }
+
+            const updateNewRoom = newRoom.update({
+                deviceCount: newRoom.deviceCount + 1,
+            });
+            const updateOldRoom = oldRoom.update({
+                deviceCount: oldRoom.deviceCount - 1,
+            });
+            await Promise.all([updateNewRoom, updateOldRoom]);
+
+            await device.update({
+                name: name ?? device.name,
+                RoomId: roomId ?? device.RoomId,
+                DeviceTypeId: deviceTypeId ?? device.DeviceTypeId,
+            });
+
+            await t.commit();
+            return res.status(200).json(device);
+        } catch (error) {
+            await t.rollback();
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async deleteDevice(req, res) {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ error: 'Id device is required' });
+        }
+        const t = await sequelize.transaction();
+        try {
+            const device = await Device.findByPk(id);
+            if (!device || device.UserId !== req.userId || device.deleted) {
+                return res.status(404).json({ error: 'Device not found' });
+            }
+            const room = await Room.findByPk(device.RoomId);
+            if (!room || room.UserId !== req.userId || room.deleted) {
+                return res.status(404).json({ error: 'Room not found' });
+            }
+
+            await room.update(
+                { deviceCount: room.deviceCount - 1 },
+                { transaction: t },
+            );
+            await device.update({ deleted: true }, { transaction: t });
+
+            await t.commit();
+            return res.sendStatus(204);
+        } catch (error) {
+            await t.rollback();
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -178,7 +317,7 @@ class DeviceController {
         try {
             const device = await Device.findByPk(id);
 
-            if (!device || device.UserId !== req.userId) {
+            if (!device || device.UserId !== req.userId || device.deleted) {
                 return res.status(404).json({ error: 'Device not found' });
             }
             const feedValue = value;

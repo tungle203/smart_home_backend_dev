@@ -3,11 +3,12 @@ const bcrypt = require('bcrypt');
 const db = require('../models/index.model');
 const User = db.user;
 const AdafruitService = require('../services/adafruit.service');
+const e = require('express');
 
 class AuthController {
     async register(req, res) {
-        const { userName, password } = req.body;
-        if (!userName || !password) {
+        const { userName, password, email, phoneNumber, fullName } = req.body;
+        if (!userName || !password || !email) {
             return res.status(400).json({ error: 'Invalid input' });
         }
 
@@ -26,12 +27,19 @@ class AuthController {
             const user = await User.create({
                 userName: userName,
                 password: hashedPassword,
+                email: email,
+                phoneNumber: phoneNumber ?? null,
+                fullName: fullName ?? null,
             });
             res.status(201).json({
                 userId: user.id,
                 userName: user.userName,
+                email: user.email,
+                phoneNumber: user.phoneNumber,
+                fullName: user.fullName,
             });
         } catch (error) {
+            console.log(error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -43,6 +51,7 @@ class AuthController {
         }
         const user = await User.findOne({
             where: {
+                deleted: false,
                 userName: userName,
             },
         });
@@ -54,7 +63,7 @@ class AuthController {
         if (!isPasswordValid) {
             return res.status(401).send('Invalid password');
         }
-        
+
         const sessionID = uuidv4();
 
         req.session[sessionID] = {

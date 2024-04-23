@@ -25,7 +25,6 @@ const server = app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);
 });
 
-
 app.get('/stop-server', (req, res) => {
     server.close(() => {
         console.log('Server closed');

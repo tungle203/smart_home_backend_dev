@@ -72,6 +72,7 @@ class PredictService {
         users.forEach(async (user) => {
             const sensors = await Sensor.findAll({
                 where: {
+                    deleted: false,
                     UserId: user.id,
                 },
             });

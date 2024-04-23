@@ -21,7 +21,6 @@ db.sensorType = require('./sensorType.model')(sequelize, DataTypes);
 db.log = require('./log.model')(sequelize, DataTypes);
 db.event = require('./event.model')(sequelize, DataTypes);
 
-
 db.user.hasMany(db.room);
 db.room.belongsTo(db.user);
 

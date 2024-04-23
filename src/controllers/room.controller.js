@@ -1,10 +1,13 @@
-const db = require('../models/index.model');
+const escapeHtml = require('escape-html');
 
+const db = require('../models/index.model');
+const e = require('express');
 const Room = db.room;
 
 class RoomController {
     async createRoom(req, res) {
-        const { name } = req.body;
+        let { name } = req.body;
+        name = escapeHtml(name);
         if (!name) {
             return res.status(400).json({ error: 'Name is required' });
         }
@@ -22,10 +25,50 @@ class RoomController {
         try {
             const rooms = await Room.findAll({
                 where: {
+                    deleted: false,
                     UserId: req.userId,
                 },
             });
             return res.status(200).json(rooms);
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async updateRoom(req, res) {
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ error: 'Id is required' });
+        }
+        let { name } = req.body;
+        name = escapeHtml(name);
+        if (!name) {
+            return res.status(400).json({ error: 'Name is required' });
+        }
+        try {
+            const room = await Room.findByPk(id);
+            if (!room || room.UserId !== req.userId || room.deleted) {
+                return res.status(404).json({ error: 'Room not found' });
+            }
+            await room.update({ name });
+            return res.status(200).json(room);
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    async deleteRoom(req, res) {
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ error: 'Id is required' });
+        }
+        try {
+            const room = await Room.findByPk(id);
+            if (!room || room.UserId !== req.userId || room.deleted) {
+                return res.status(404).json({ error: 'Room not found' });
+            }
+            await room.update({ deleted: true });
+            return res.sendStatus(204);
         } catch (error) {
             return res.status(500).json({ error: 'Internal server error' });
         }

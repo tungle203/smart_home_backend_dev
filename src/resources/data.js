@@ -10,7 +10,11 @@ const data = {
     users: [
         {
             userName: 'tungle',
-            password: '$2b$10$qkD9xP8zU9e1CwZWej9xpetOnKw2hjCjMxr16Nul1SEfO9H0dW4uS',
+            password:
+                '$2b$10$qkD9xP8zU9e1CwZWej9xpetOnKw2hjCjMxr16Nul1SEfO9H0dW4uS',
+            email: 'thanhtunga52021@gmail.com',
+            phoneNumber: '0966288048',
+            fullName: 'Le Thanh Tung',
         },
     ],
     rooms: [

@@ -42,10 +42,15 @@ class LogService {
 
         const sensorTypes = await SensorType.findAll();
 
-        const users = await User.findAll();
+        const users = await User.findAll({
+            where: { deleted: false },
+        });
         for (const user of users) {
             const sensors = await Sensor.findAll({
-                where: { UserId: user.id },
+                where: {
+                    deleted: false,
+                    UserId: user.id,
+                },
             });
             for (const sensor of sensors) {
                 const data = await AdafruitService.getDataChart(
@@ -55,7 +60,7 @@ class LogService {
                     new Date().toUTCString(),
                 );
 
-                if(data.data.length !== 0) {
+                if (data.data.length !== 0) {
                     await sensor.update({
                         value: data.data[data.data.length - 1][1],
                     });

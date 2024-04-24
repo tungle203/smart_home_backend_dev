@@ -1,6 +1,4 @@
 const LogService = require('../services/log.service');
-// const AdafruitService = require('../services/adafruit.service');
-// const db = require('../models/index.model');
 
 class LogController {
     constructor() {

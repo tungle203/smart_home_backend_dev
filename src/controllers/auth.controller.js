@@ -1,9 +1,9 @@
 const uuidv4 = require('uuid').v4;
 const bcrypt = require('bcrypt');
+
 const db = require('../models/index.model');
 const User = db.user;
 const AdafruitService = require('../services/adafruit.service');
-const e = require('express');
 
 class AuthController {
     async register(req, res) {

@@ -1,7 +1,6 @@
 const escapeHtml = require('escape-html');
 
 const db = require('../models/index.model');
-const e = require('express');
 const Room = db.room;
 
 class RoomController {

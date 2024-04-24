@@ -29,7 +29,7 @@ cd smart_home_backend_dev
 ```
 npm install
 ```
-4. Register your adafruit account
+4. Register your adafruit account: https://io.adafruit.com
 5. Set up environment variables:
 - Create a `.env` file in the root directory.
 - Define the following variables in the `.env` file:

@@ -5,14 +5,6 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
             unique: false,
         },
-        upperThreshold: {
-            type: DataTypes.FLOAT,
-            allowNull: false,
-        },
-        lowerThreshold: {
-            type: DataTypes.FLOAT,
-            allowNull: false,
-        },
         description: {
             type: DataTypes.STRING,
             allowNull: true,

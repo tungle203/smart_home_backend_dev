@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 
 const db = require('../models/index.model');
 const User = db.user;
+const Sensor = db.sensor;
 const AdafruitService = require('../services/adafruit.service');
 
 class AuthController {
@@ -31,6 +32,29 @@ class AuthController {
                 phoneNumber: phoneNumber ?? null,
                 fullName: fullName ?? null,
             });
+            const sensor = await Sensor.bulkCreate([
+                {
+                    name: 'Temperature',
+                    feedName: `${userName}-temperature-sensor`,
+                    upperThreshold: 40,
+                    lowerThreshold: 10,
+                    UserId: user.id,
+                    SensorTypeId: 1,
+                    value: 0,
+                },
+                {
+                    name: 'Humidity',
+                    feedName: `${userName}-humidity-sensor`,
+                    upperThreshold: 90,
+                    lowerThreshold: 30,
+                    UserId: user.id,
+                    SensorTypeId: 2,
+                    value: 0,
+                },
+            ]);
+            
+            await AdafruitService.createFeedInGroup(sensor[0].feedName, userName);
+            await AdafruitService.createFeedInGroup(sensor[1].feedName, userName);
             res.status(201).json({
                 userId: user.id,
                 userName: user.userName,

@@ -32,45 +32,42 @@ const data = {
     sensorTypes: [
         {
             name: 'Temperature',
-            upperThreshold: 40,
-            lowerThreshold: 10,
-            UserId: 1,
         },
         {
             name: 'Humidity',
-            upperThreshold: 90,
-            lowerThreshold: 30,
-            UserId: 1,
         },
-        {
-            name: 'Light',
-            upperThreshold: 100,
-            lowerThreshold: 0,
-            UserId: 1,
-        },
+        // {
+        //     name: 'Light',
+        //     upperThreshold: 100,
+        //     lowerThreshold: 0,
+        // },
     ],
     sensor: [
         {
-            name: 'Temperature 1',
-            feedName: 'temperature1-1-sensor',
+            name: 'Temperature',
+            feedName: 'tungle-temperature-sensor',
+            upperThreshold: 40,
+            lowerThreshold: 10,
             UserId: 1,
             SensorTypeId: 1,
             value: 0,
         },
         {
-            name: 'Humidity 1',
-            feedName: 'humidity1-2-sensor',
+            name: 'Humidity',
+            feedName: 'tungle-humidity-sensor',
             UserId: 1,
             SensorTypeId: 2,
+            upperThreshold: 90,
+            lowerThreshold: 30,
             value: 0,
         },
-        {
-            name: 'Light 1',
-            feedName: 'light1-3-sensor',
-            UserId: 1,
-            SensorTypeId: 3,
-            value: 0,
-        },
+        // {
+        //     name: 'Light 1',
+        //     feedName: 'light1-3-sensor',
+        //     UserId: 1,
+        //     SensorTypeId: 3,
+        //     value: 0,
+        // },
     ],
     deviceTypes: [
         {

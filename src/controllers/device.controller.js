@@ -12,6 +12,7 @@ class DeviceController {
     async getDeviceType(req, res) {
         try {
             const deviceTypes = await DeviceType.findAll({
+                attributes: ['id', 'name', 'description'],
                 where: {
                     deleted: false,
                     UserId: req.userId,

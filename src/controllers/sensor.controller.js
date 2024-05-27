@@ -34,7 +34,6 @@ class SensorController {
             const sensorType = await SensorType.findAll({
                 where: {
                     deleted: false,
-                    UserId: req.userId,
                 },
             });
             res.status(200).json(sensorType);
@@ -125,7 +124,6 @@ class SensorController {
                 .status(400)
                 .json({ message: 'Please provide all required fields' });
         }
-        const t = await sequelize.transaction();
         try {
             const sensor = await Sensor.create(
                 {
@@ -134,20 +132,17 @@ class SensorController {
                     SensorTypeId: sensorTypeId,
                     UserId: req.userId,
                 },
-                { transaction: t },
             );
 
             const feedName = name.toLowerCase().replace(/ /g, '-');
             sensor.feedName = feedName + '-' + sensor.id + '-sensor';
+            await sensor.save();
             await AdafruitService.createFeedInGroup(
                 sensor.feedName,
                 req.userName,
             );
-            await sensor.save();
-            await t.commit();
             res.status(201).json(sensor);
         } catch (error) {
-            await t.rollback();
             res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -155,6 +150,7 @@ class SensorController {
     async getSensors(req, res) {
         try {
             const sensor = await Sensor.findAll({
+                attributes: ['id', 'name', 'value', ['SensorTypeId', 'sensorTypeId'], 'createdAt'],
                 where: {
                     deleted: false,
                     UserId: req.userId,
@@ -164,6 +160,52 @@ class SensorController {
         } catch (error) {
             res.status(500).json(error);
         }
+    }
+
+    async getCurrentSensorData(req, res) {
+        res.set({
+            'Cache-Control': 'no-cache',
+            'Content-Type': 'text/event-stream',
+            Connection: 'keep-alive',
+        });
+        res.flushHeaders();
+
+        const getDataInterval = setInterval(async () => {
+            try {
+                const sensor = await Sensor.findAll({
+                    where: {
+                        deleted: false,
+                        UserId: req.userId,
+                    },
+                });
+                
+                const data = await Promise.all([
+                    AdafruitService.getLastFeedData(req.userName, sensor[0].feedName),
+                    AdafruitService.getLastFeedData(req.userName, sensor[1].feedName),
+                ])
+
+                const lastData = {
+                    temperature: data[0][0].value,
+                    humidity: data[1][0].value,
+                }
+
+                sensor[0].value = lastData.temperature;
+                sensor[1].value = lastData.humidity;
+
+                await sensor[0].save();
+                await sensor[1].save();
+
+                res.write(`data: ${JSON.stringify(lastData)}\n\n`);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        , 5000);
+
+        res.on('close', () => {
+            clearInterval(getDataInterval);
+            res.end();
+        });
     }
 
     async getSensorData(req, res) {
@@ -199,19 +241,15 @@ class SensorController {
 
     async updateSensor(req, res) {
         const { id } = req.params;
-        let { name, sensorTypeId } = req.body;
-        name = escapeHtml(name);
-        if (name === undefined) {
-            return res.status(400).json({ error: 'Name is required' });
-        }
+        const { upperThreshold, lowerThreshold } = req.body;
         try {
             const sensor = await Sensor.findByPk(id);
             if (!sensor || sensor.UserId !== req.userId || sensor.deleted) {
                 return res.status(404).json({ error: 'Sensor not found' });
             }
             await sensor.update({
-                name: name ?? sensor.name,
-                SensorTypeId: sensorTypeId ?? sensor.SensorTypeId,
+                upperThreshold: upperThreshold ?? sensor.upperThreshold,
+                lowerThreshold: lowerThreshold ?? sensor.lowerThreshold,
             });
             res.status(200).json(sensor);
         } catch (error) {

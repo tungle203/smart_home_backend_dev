@@ -1,5 +1,6 @@
 const LogService = require('../services/log.service');
-
+const db = require('../models/index.model');
+const Log = db.log;
 class LogController {
     constructor() {
         this.intervalCreateLog = setInterval(async () => {
@@ -13,7 +14,7 @@ class LogController {
 
     static logs = [];
 
-    getLogs(req, res) {
+    getLogsStream(req, res) {
         res.set({
             'Cache-Control': 'no-cache',
             'Content-Type': 'text/event-stream',
@@ -37,6 +38,23 @@ class LogController {
         });
     }
 
+    async getLogs(req, res) {
+        try {
+            const logs = await Log.findAll(
+                {
+                    attributes: ['id', 'message', 'value', 'date'],
+                    where: {
+                        UserId: req.userId,
+                    },
+                },
+            );
+            logs.sort((a, b) => b.date - a.date);
+            return res.status(200).json(logs);
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+
+    }
     destroy() {
         clearInterval(this.intervalCreateLog);
     }

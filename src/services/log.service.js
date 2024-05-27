@@ -40,8 +40,6 @@ class LogService {
     async createLogs() {
         const logs = [];
 
-        const sensorTypes = await SensorType.findAll();
-
         const users = await User.findAll({
             where: { deleted: false },
         });
@@ -65,9 +63,7 @@ class LogService {
                         value: data.data[data.data.length - 1][1],
                     });
                 }
-                const sensorType = sensorTypes.find(
-                    (sensorType) => sensorType.id === sensor.SensorTypeId,
-                );
+
                 for (const dataPoint of data.data) {
                     const value = dataPoint[1];
                     const date = new Date(dataPoint[0]);
@@ -75,14 +71,20 @@ class LogService {
                         user.id,
                         sensor.id,
                         value,
-                        `The value of the sensor ${sensor.name} is below the lower threshold of ${sensorType.lowerThreshold}`,
-                        `The value of the sensor ${sensor.name} is above the upper threshold of ${sensorType.upperThreshold}`,
+                        `The value of the sensor ${sensor.name} is below the lower threshold of ${sensor.lowerThreshold}`,
+                        `The value of the sensor ${sensor.name} is above the upper threshold of ${sensor.upperThreshold}`,
                         date,
-                        sensorType.lowerThreshold,
-                        sensorType.upperThreshold,
+                        sensor.lowerThreshold,
+                        sensor.upperThreshold,
                     );
                     if (log) {
-                        logs.push(log);
+                        logs.push({
+                            message: log.message,
+                            value: log.value,
+                            date: log.date,
+                            UserId: log.UserId,
+                            SensorId: log.SensorId,
+                        });
                     }
                 }
             }

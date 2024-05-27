@@ -14,7 +14,10 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(session);
 
-app.use(cors());
+app.use(cors({
+    credentials: true,
+    origin: 'http://localhost:8081',
+}));
 app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

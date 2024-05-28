@@ -4,6 +4,7 @@ const router = express.Router();
 const authentication = require('../middlewares/auth');
 const AuthController = require('../controllers/auth.controller');
 
+router.options('/login', AuthController.login);
 router.post('/login', AuthController.login);
 router.post('/register', AuthController.register);
 router.post('/logout', authentication, AuthController.logout);

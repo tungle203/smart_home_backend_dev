@@ -150,7 +150,6 @@ class SensorController {
     async getSensors(req, res) {
         try {
             const sensor = await Sensor.findAll({
-                attributes: ['id', 'name', 'value', ['SensorTypeId', 'sensorTypeId'], 'createdAt'],
                 where: {
                     deleted: false,
                     UserId: req.userId,
@@ -170,7 +169,7 @@ class SensorController {
         });
         res.flushHeaders();
 
-        const getDataInterval = setInterval(async () => {
+        const sendData = async () => {
             try {
                 const sensor = await Sensor.findAll({
                     where: {
@@ -200,7 +199,11 @@ class SensorController {
                 console.log(error);
             }
         }
-        , 5000);
+        sendData();
+
+        const getDataInterval = setInterval(
+            sendData
+        , 30000);
 
         res.on('close', () => {
             clearInterval(getDataInterval);
@@ -209,31 +212,50 @@ class SensorController {
     }
 
     async getSensorData(req, res) {
-        const { id } = req.params;
-        if (!id) {
-            return res.status(400).json({ error: 'Id sensor are required' });
-        }
-        const days = req.query.days || 5;
-        const resolution = req.query.resolution;
-
+        
         try {
-            const sensor = await Sensor.findByPk(id);
-            if (!sensor || sensor.UserId !== req.userId || sensor.deleted) {
-                return res.status(404).json({ error: 'Sensor not found' });
-            }
-            const startTime = new Date(
-                new Date().getTime() - days * 24 * 60 * 60 * 1000,
-            ).toUTCString();
-            const endTime = new Date().toUTCString();
+            const sensor = await Sensor.findAll({
+                where: {
+                    UserId: req.userId,
+                },
+            })
+            const inputDate = req.query.date
+            const [month, day, year] = inputDate.split('/');
 
-            const data = await AdafruitService.getDataChart(
-                req.userName,
-                sensor.feedName,
-                startTime,
-                endTime,
-                resolution,
-            );
-            res.status(200).json({ sensor, data: data.data });
+            let startTime
+            let endTime
+            let resolution
+
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            if(today.getTime() === new Date(year, month - 1, day).getTime()) {
+                startTime = new Date(new Date().getTime() - 12 * 60 * 60 * 1000).toUTCString();
+                endTime = new Date().toUTCString();
+                resolution = 120
+            } else {
+                startTime = new Date(year, month - 1, day, 0, 0, 0).toUTCString();
+                endTime = new Date(year, month - 1, day, 23, 59, 59).toUTCString();
+                resolution = 240
+            }
+
+            const data = await Promise.all([
+                AdafruitService.getDataChart(
+                    req.userName,
+                    sensor[0].feedName,
+                    startTime,
+                    endTime,
+                    resolution,
+                ),
+                AdafruitService.getDataChart(
+                    req.userName,
+                    sensor[1].feedName,
+                    startTime,
+                    endTime,
+                    resolution,
+                ),
+            ]);
+
+            res.status(200).json({ temperature: data[0].data, humidity: data[1].data});
         } catch (error) {
             res.status(500).json(error);
         }

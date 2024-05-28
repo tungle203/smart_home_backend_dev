@@ -12,10 +12,9 @@ class DeviceController {
     async getDeviceType(req, res) {
         try {
             const deviceTypes = await DeviceType.findAll({
-                attributes: ['id', 'name', 'description'],
+                attributes: [['id', 'key'], ['name', 'value'], 'description'],
                 where: {
                     deleted: false,
-                    UserId: req.userId,
                 },
             });
             return res.status(200).json(deviceTypes);
@@ -189,7 +188,6 @@ class DeviceController {
             const deviceType = await DeviceType.findByPk(deviceTypeId);
             if (
                 !deviceType ||
-                deviceType.UserId !== req.userId ||
                 deviceType.deleted
             ) {
                 return res.status(404).json({ error: 'Device type not found' });

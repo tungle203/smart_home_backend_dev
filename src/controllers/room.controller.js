@@ -2,8 +2,28 @@ const escapeHtml = require('escape-html');
 
 const db = require('../models/index.model');
 const Room = db.room;
+const Device = db.device;
 
 class RoomController {
+    async getDevicesInRoom(req, res) {
+        const roomId = req.params.id;
+        if (!roomId) {
+            return res.status(400).json({ error: 'RoomId is required' });
+        }
+        try {
+            const devices = await Device.findAll({
+                where: {
+                    RoomId: roomId,
+                    UserId: req.userId,
+                    deleted: false,
+                },
+            });
+            return res.status(200).json(devices);
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+}
+
     async createRoom(req, res) {
         let { name } = req.body;
         name = escapeHtml(name);

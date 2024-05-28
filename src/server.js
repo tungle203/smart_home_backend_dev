@@ -11,13 +11,13 @@ const port = process.env.PORT || 4000;
 
 app.use(limiter);
 app.use(cookieParser());
-app.use(morgan('dev'));
+morgan.token('origin', (req) => {
+    return req.get('origin') || req.get('host'); // Sử dụng 'origin' nếu có, nếu không sử dụng 'host'
+  });
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :origin'));
 app.use(session);
 
-app.use(cors({
-    credentials: true,
-    origin: 'http://localhost:8081',
-}));
+app.use(cors());
 app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

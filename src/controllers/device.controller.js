@@ -172,6 +172,7 @@ class DeviceController {
             );
             return res.status(200).json({ device, data: data.data });
         } catch (error) {
+            console.log(error);
             return res.status(500).json({ error: 'Internal server error' });
         }
     }
@@ -307,24 +308,30 @@ class DeviceController {
 
     async controlDevice(req, res) {
         const { id } = req.params;
-        const { value } = req.body;
-        if (!id || value === undefined) {
+        const { status } = req.body;
+        if (!id || status === undefined) {
+            return res
+                .status(400)
+                .json({ error: 'Id device and status are required' });
+        }
+        if (!id) {
             return res
                 .status(400)
                 .json({ error: 'Id device and value are required' });
         }
         try {
             const device = await Device.findByPk(id);
-
             if (!device || device.UserId !== req.userId || device.deleted) {
                 return res.status(404).json({ error: 'Device not found' });
             }
-            const feedValue = value;
+            const deviceType = await DeviceType.findByPk(device.DeviceTypeId);
+            const defaultValue = status ? deviceType.defaultValue : 0;
             await AdafruitService.createData(
                 req.userName,
                 device.feedName,
-                feedValue,
+                defaultValue,
             );
+            await device.update({ status });
             return res.sendStatus(200);
         } catch (error) {
             return res.status(500).json({ error: 'Internal server error' });

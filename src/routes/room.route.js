@@ -5,6 +5,7 @@ const authentication = require('../middlewares/auth');
 const RoomController = require('../controllers/room.controller');
 
 router.get('/:id/devices', authentication, RoomController.getDevicesInRoom);
+router.get('/:id/stream', authentication, RoomController.getDeviceDataStream);
 router.put('/:id', authentication, RoomController.updateRoom);
 router.delete('/:id', authentication, RoomController.deleteRoom);
 router.get('/', authentication, RoomController.getRooms);

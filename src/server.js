@@ -9,6 +9,7 @@ const route = require('./routes/index.route');
 const limiter = require('./config/limiter');
 const port = process.env.PORT || 4000;
 
+app.set('trust proxy', 1);
 app.use(limiter);
 app.use(cookieParser());
 morgan.token('origin', (req) => {
@@ -17,7 +18,11 @@ morgan.token('origin', (req) => {
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :origin'));
 app.use(session);
 
-app.use(cors());
+app.use(cors(
+  {
+    origin: '*'
+  }
+));
 app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

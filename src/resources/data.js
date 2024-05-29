@@ -20,12 +20,22 @@ const data = {
     rooms: [
         {
             name: 'Living room',
-            deviceCount: 1,
+            deviceCount: 6,
             UserId: 1,
         },
         {
             name: 'Kitchen',
-            deviceCount: 1,
+            deviceCount: 0,
+            UserId: 1,
+        },
+        {
+            name: 'Bedroom',
+            deviceCount: 0,
+            UserId: 1,
+        },
+        {
+            name: 'Bathroom',
+            deviceCount: 0,
             UserId: 1,
         },
     ],
@@ -36,11 +46,6 @@ const data = {
         {
             name: 'Humidity',
         },
-        // {
-        //     name: 'Light',
-        //     upperThreshold: 100,
-        //     lowerThreshold: 0,
-        // },
     ],
     sensor: [
         {
@@ -61,22 +66,15 @@ const data = {
             lowerThreshold: 30,
             value: 0,
         },
-        // {
-        //     name: 'Light 1',
-        //     feedName: 'light1-3-sensor',
-        //     UserId: 1,
-        //     SensorTypeId: 3,
-        //     value: 0,
-        // },
     ],
     deviceTypes: [
         {
             name: 'Led',
-            UserId: 1,
+            defaultValue: 1,
         },
         {
             name: 'Fan',
-            UserId: 1,
+            defaultValue: 100,
         },
     ],
     devices: [
@@ -84,19 +82,49 @@ const data = {
             name: 'Led 1',
             feedName: 'led1-1-device',
             UserId: 1,
-            RoomId: 2,
+            RoomId: 1,
             DeviceTypeId: 1,
-            status: 0,
-            value: 0,
+            status: false,
+        },
+        {
+            name: 'Led 2',
+            feedName: 'led2-2-device',
+            UserId: 1,
+            RoomId: 1,
+            DeviceTypeId: 1,
+            status: false,
+        },
+        {
+            name: 'Led 3',
+            feedName: 'led3-3-device',
+            UserId: 1,
+            RoomId: 1,
+            DeviceTypeId: 1,
+            status: false,
+        },
+        {
+            name: 'Led 4',
+            feedName: 'led4-4-device',
+            UserId: 1,
+            RoomId: 1,
+            DeviceTypeId: 1,
+            status: false,
         },
         {
             name: 'Fan 1',
-            feedName: 'fan1-2-device',
+            feedName: 'fan1-5-device',
             UserId: 1,
             RoomId: 1,
             DeviceTypeId: 2,
-            status: 0,
-            value: 0,
+            status: false,
+        },
+        {
+            name: 'Fan 2',
+            feedName: 'fan2-6-device',
+            UserId: 1,
+            RoomId: 1,
+            DeviceTypeId: 2,
+            status: false,
         },
     ],
 };

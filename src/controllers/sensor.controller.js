@@ -220,8 +220,7 @@ class SensorController {
                 },
             })
             const inputDate = req.query.date
-            const [month, day, year] = inputDate.split('/');
-
+            const [day, month, year] = inputDate.split('/');
             let startTime
             let endTime
             let resolution

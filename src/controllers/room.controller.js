@@ -1,9 +1,10 @@
 const escapeHtml = require('escape-html');
-
+require('dotenv').config();
 const db = require('../models/index.model');
 const Room = db.room;
 const Device = db.device;
-
+const AdafruitService = require('../services/adafruit.service');
+const { parse } = require('dotenv');
 class RoomController {
     async getDevicesInRoom(req, res) {
         const roomId = req.params.id;
@@ -22,7 +23,51 @@ class RoomController {
         } catch (error) {
             return res.status(500).json({ error: 'Internal server error' });
         }
-}
+    }
+
+    async getDeviceDataStream(req, res) {
+        const roomId = req.params.id;
+
+        res.set({
+            'Cache-Control': 'no-cache',
+            'Content-Type': 'text/event-stream',
+            Connection: 'keep-alive',
+        });
+        res.flushHeaders();
+
+        const sendData = async () => {
+            try {
+                const devices = await Device.findAll({
+                    where: {
+                        deleted: false,
+                        UserId: req.userId,
+                        RoomId: roomId,
+                    },
+                });
+                
+                const data = await Promise.all(devices.map(device => AdafruitService.getLastFeedData(req.userName,req.userName + '.' + device.feedName)))
+                data.forEach(async item => {
+                    const feedName = item[0].feed_key.split('.')[1];
+                    const device = devices.find(device => device.feedName === feedName);
+                    device.status = parseInt(item[0].value) ? true : false;
+                    await device.save();
+                })
+
+                res.write(`data: ${JSON.stringify(devices)}\n\n`);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        const getDataInterval = setInterval(
+            sendData
+        , 5000);
+
+        res.on('close', () => {
+            clearInterval(getDataInterval);
+            res.end();
+        });
+    }
 
     async createRoom(req, res) {
         let { name } = req.body;

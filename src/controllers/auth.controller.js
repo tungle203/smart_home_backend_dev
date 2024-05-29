@@ -1,11 +1,11 @@
 const uuidv4 = require('uuid').v4;
 const bcrypt = require('bcrypt');
-
+const jwt = require('jsonwebtoken');
 const db = require('../models/index.model');
 const User = db.user;
 const Sensor = db.sensor;
 const AdafruitService = require('../services/adafruit.service');
-
+require('dotenv').config();
 class AuthController {
     async register(req, res) {
         const { userName, password, email, phoneNumber, fullName } = req.body;
@@ -83,25 +83,35 @@ class AuthController {
             return res.status(404).send('User not found');
         }
 
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
+        try {
+            await bcrypt.compare(password, user.password);
+        } catch (error) {
+            console.log(error);
             return res.status(401).send('Invalid password');
         }
 
         const sessionID = uuidv4();
-
-        req.session[sessionID] = {
-            userId: user.id,
-            userName: user.userName,
-        };
-        res.setHeader(
-            'Set-Cookie',
-            `sessionID=${sessionID}; HttpOnly; Max-Age=${1000 * 60 * 60 * 24}`,
-            'domain=localhost',
-        );
+        const token = jwt.sign(
+            {
+                userId: user.id,
+                userName: user.userName,           
+            },
+                process.env.TOKEN_SECRET,
+            { expiresIn: '1h' },
+        )
+        // req.session[sessionID] = {
+        //     userId: user.id,
+        //     userName: user.userName,
+        // };
+        // res.setHeader(
+        //     'Set-Cookie',
+        //     `sessionID=${sessionID}; HttpOnly; Max-Age=${1000 * 60 * 60 * 24}`,
+        //     'domain=localhost',
+        // );
         res.status(200).json({
             userId: user.id,
             userName: user.userName,
+            token: token,
         });
     }
 

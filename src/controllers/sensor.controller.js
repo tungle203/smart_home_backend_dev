@@ -230,11 +230,11 @@ class SensorController {
             if(today.getTime() === new Date(year, month - 1, day).getTime()) {
                 startTime = new Date(new Date().getTime() - 12 * 60 * 60 * 1000).toUTCString();
                 endTime = new Date().toUTCString();
-                resolution = 120
+                resolution = 60
             } else {
                 startTime = new Date(year, month - 1, day, 0, 0, 0).toUTCString();
                 endTime = new Date(year, month - 1, day, 23, 59, 59).toUTCString();
-                resolution = 240
+                resolution = 120
             }
 
             const data = await Promise.all([

@@ -30,7 +30,7 @@ class LogController {
                     }
                 });
             }
-        }, 30000);
+        }, 20000);
 
         res.on('close', () => {
             clearInterval(interval);

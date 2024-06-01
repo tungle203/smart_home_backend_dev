@@ -25,19 +25,24 @@ const data = {
         },
         {
             name: 'Kitchen',
-            deviceCount: 0,
+            deviceCount: 3,
             UserId: 1,
         },
         {
             name: 'Bedroom',
-            deviceCount: 0,
+            deviceCount: 3,
             UserId: 1,
         },
         {
             name: 'Bathroom',
-            deviceCount: 0,
+            deviceCount: 4,
             UserId: 1,
         },
+        {
+            name: 'Balcony',
+            deviceCount: 2,
+            UserId: 1,
+        }
     ],
     sensorTypes: [
         {

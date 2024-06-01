@@ -209,7 +209,7 @@ class DeviceController {
             });
 
             const feedName = name.toLowerCase().replace(/ /g, '-');
-            device.feedName = feedName + '-' + device.id + '-device';
+            device.feedName = feedName + device.id + '-device';
             await AdafruitService.createFeedInGroup(
                 device.feedName,
                 req.userName,
